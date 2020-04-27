@@ -36,6 +36,7 @@ state_size = 29                       # number of parameters in state space
 action_size = 3                       # number of parameters in action space
 
 
+
 save_freq  = 5                        # number of epochs after which to save model      
 exp_num = 1                           # experiment number
 
