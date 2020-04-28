@@ -25,7 +25,7 @@ max_steps = 50000                     # maximum time steps for each episode
 expert_thresh = 0.5                   # parameter to control number of exper trajectories selected (lower means more expert traj.)  
 
 
-expert_dir  = "/home/aman/Programming/RL-Project/expert_trajectories" # directory containing expert trajectories
+expert_dir  = "/home/aman/Programming/RL-Project/Expert_Trajectories" # directory containing expert trajectories
 weights_dir = "./weights"             # directory to store weights
 logs_dir    = "./logs"                # directory to store tensorboard logs  
 
@@ -36,7 +36,7 @@ state_size = 29                       # number of parameters in state space
 action_size = 3                       # number of parameters in action space
 
 save_freq  = 5                        # number of epochs after which to save model      
-exp_num = 1                           # experiment number
+exp_num = 3                           # experiment number
 
 # Define the GPU device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -44,7 +44,7 @@ print("Selected {} device".format(device))
 
 
 # Defining the GAIL agent
-agent = GAIL(expert_dir,expert_thresh,state_size,action_size,lr,betas,device,gamma)
+agent = GAIL(expert_dir,expert_thresh,state_size,action_size,lr,betas,device,gamma,load_weights=True)
 
 # defining tensorboard agent
 writer = SummaryWriter(logs_dir+"/Experiment-{}".format(exp_num))
@@ -75,7 +75,8 @@ os.makedirs(logs_dir,exist_ok=True)
 
 start = 0
 for epoch in range(1,epochs+1):
-     
+
+    agent.set_mode("train")    
     # update the policy
     actor_loss,disc_loss = agent.update(n_iter,batch_size=mini_batch)
     
@@ -88,6 +89,7 @@ for epoch in range(1,epochs+1):
     '''
     Evaluate the policy learnt in last network
     '''
+    agent.set_mode("eval")
     eval_returns = np.zeros(eval_episodes,dtype=np.float)
     for eps in range(eval_episodes):
     
@@ -121,7 +123,7 @@ for epoch in range(1,epochs+1):
     writer.add_scalar("Eval/mean_return",mean_return,epoch)
 
     if epoch % save_freq == 0:
-        agent.save(name='GAIL-{}'.format(random_seed))
+        agent.save(name='GAIL')
         
 
 

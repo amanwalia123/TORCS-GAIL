@@ -12,20 +12,12 @@ import os
 #                                     #   
 #######################################
 
-lr = 0.0001                           # learning rate
 random_seed = 100                     # random seed for experiment  
-betas = (0.5,0.99)                    # betas for adam optimizer
-epochs = 1000                         # number of epochs to train
-n_iter = 512                          # number of iterations for each update   
-mini_batch = 1024                     # number of transitions sampled from expert
 gamma = 0.95                          # discount factor
-test_episodes = 50                    # number of evaluation episodes for validation reward
+test_episodes = 100                   # number of evaluation episodes for validation reward
 VISION = False                        # using torcs in measurement based mode (instead vision based mode)  
 max_steps = 50000                     # maximum time steps for each episode  
-expert_thresh = 0.5                   # parameter to control number of exper trajectories selected (lower means more expert traj.)  
 
-
-expert_dir  = "/home/aman/Programming/RL-Project/expert_trajectories" # directory containing expert trajectories
 weights_dir = "./weights"             # directory to store weights
 logs_dir    = "./logs"                # directory to store tensorboard logs  
 
@@ -35,20 +27,20 @@ env = TorcsEnv(vision=VISION,throttle=True,gear_change=False)
 state_size = 29                       # number of parameters in state space
 action_size = 3                       # number of parameters in action space
 
-save_freq  = 5                        # number of epochs after which to save model      
 exp_num = 1                           # experiment number
 
 # Define the GPU device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Selected {} device".format(device))
 
-
 # Defining the policy agent
 actor = ActorNetwork(state_size).to(device)
+
 # Loading the learnt model 
 actor.load_state_dict(torch.load('/home/aman/Programming/RL-Project/Deterministic-GAIL/weights/GAIL_actor.pth'))
+actor.eval()
 
-# defining tensorboard agent
+# Defining tensorboard agent
 writer = SummaryWriter(logs_dir+"/Testing-{}".format(exp_num))
 
 def write_arr_tb(arr,writer,name,start_index):
