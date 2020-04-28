@@ -8,7 +8,7 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "/home/aman/Programming/RL-Project/GAIL/getexptraj.py",
+            "program": "/home/aman/Programming/RL-Project/Deterministic-GAIL/test.py",
             "console": "integratedTerminal"
         }
     ]

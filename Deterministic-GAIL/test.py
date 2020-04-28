@@ -1,7 +1,7 @@
 from gym_torcs import TorcsEnv
 import torch
 import numpy as np
-from gail import GAIL
+from actor import ActorNetwork
 from torch.utils.tensorboard import SummaryWriter
 from utility import calc_disc_return
 import os
@@ -19,7 +19,7 @@ epochs = 1000                         # number of epochs to train
 n_iter = 512                          # number of iterations for each update   
 mini_batch = 1024                     # number of transitions sampled from expert
 gamma = 0.95                          # discount factor
-eval_episodes = 2                     # number of evaluation episodes for validation reward
+test_episodes = 50                    # number of evaluation episodes for validation reward
 VISION = False                        # using torcs in measurement based mode (instead vision based mode)  
 max_steps = 50000                     # maximum time steps for each episode  
 expert_thresh = 0.5                   # parameter to control number of exper trajectories selected (lower means more expert traj.)  
@@ -43,11 +43,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Selected {} device".format(device))
 
 
-# Defining the GAIL agent
-agent = GAIL(expert_dir,expert_thresh,state_size,action_size,lr,betas,device,gamma)
+# Defining the policy agent
+actor = ActorNetwork(state_size).to(device)
+# Loading the learnt model 
+actor.load_state_dict(torch.load('/home/aman/Programming/RL-Project/Deterministic-GAIL/weights/GAIL_actor.pth'))
 
 # defining tensorboard agent
-writer = SummaryWriter(logs_dir+"/Experiment-{}".format(exp_num))
+writer = SummaryWriter(logs_dir+"/Testing-{}".format(exp_num))
 
 def write_arr_tb(arr,writer,name,start_index):
    """
@@ -70,63 +72,40 @@ if random_seed:
 
 
 # make necessary directories
-os.makedirs(weights_dir,exist_ok=True)
 os.makedirs(logs_dir,exist_ok=True)    
 
 start = 0
-for epoch in range(1,epochs+1):
-     
-    # update the policy
-    actor_loss,disc_loss = agent.update(n_iter,batch_size=mini_batch)
+
+eval_returns = np.zeros(test_episodes,dtype=np.float)
+
+for eps in range(test_episodes):
+
+    if np.mod(eps, 3) == 0:
+        ob = env.reset(relaunch=True)
+    else:
+        ob = env.reset()
+
+    state = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
     
-    # add the losses to tensorboard
-    write_arr_tb(actor_loss,writer,"Training/actor_loss",start)
-    write_arr_tb(disc_loss,writer,"Training/discriminator_loss",start)
-
-    start += actor_loss.shape[0]
-
-    '''
-    Evaluate the policy learnt in last network
-    '''
-    eval_returns = np.zeros(eval_episodes,dtype=np.float)
-    for eps in range(eval_episodes):
-    
-        if np.mod(eps, 3) == 0:
-            ob = env.reset(relaunch=True)
-        else:
-            ob = env.reset()
-
-        state = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
+    rewards = []
+    for steps in range(max_steps):
         
-        rewards = []
-        for steps in range(max_steps):
-            
-            # get action from policy trained in last epoch    
-            action = agent.get_action(state)
-            
-            # take action and observe reward and next state     
-            ob, reward, done, info = env.step(action)
-            next_state = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
-            rewards.append(reward)
-
-            if done:
-                break
-
-            state = next_state
-
-        _return =  calc_disc_return(rewards,gamma)
-        eval_returns[eps] = _return[0]
-
-    mean_return = np.mean(eval_returns)
-    writer.add_scalar("Eval/mean_return",mean_return,epoch)
-
-    if epoch % save_freq == 0:
-        agent.save(name='GAIL-{}'.format(random_seed))
+        # state in GPU
+        state = torch.tensor(state,dtype=torch.float,device=device).view(1,-1)
         
+        # get action from policy trained in last epoch    
+        action = actor(state).cpu().data.numpy().flatten()
+        
+        # take action and observe reward and next state     
+        ob, reward, done, info = env.step(action)
+        next_state = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
+        rewards.append(reward)
 
+        if done:
+            break
 
+        state = next_state
 
-
-
-     
-
+    _return =  calc_disc_return(rewards,gamma)
+    eval_returns[eps] = _return[0]
+    writer.add_scalar("Test/mean_return",_return[0],eps)
