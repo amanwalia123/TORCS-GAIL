@@ -1,2 +1,6 @@
-.vscode/
-__pycache__/
+# Ignore folders
+.vscode
+__pycache__
+
+#Ignore files
+.gitignore
