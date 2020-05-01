@@ -36,7 +36,7 @@ state_size = 29                       # number of parameters in state space
 action_size = 3                       # number of parameters in action space
 
 save_freq  = 5                        # number of epochs after which to save model      
-exp_num = 3                           # experiment number
+exp_num = 4                           # experiment number
 
 # Define the GPU device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -123,7 +123,7 @@ for epoch in range(1,epochs+1):
     writer.add_scalar("Eval/mean_return",mean_return,epoch)
 
     if epoch % save_freq == 0:
-        agent.save(name='GAIL')
+        agent.save(name='GAIL-trial')
         
 
 

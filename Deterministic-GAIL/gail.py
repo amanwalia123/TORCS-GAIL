@@ -3,6 +3,7 @@ from discriminator import Discriminator
 from getexptraj import ExpertTrajectories
 import torch
 import numpy as np
+import os
 
 def init_weights(m):
     if type(m) == torch.nn.Linear:
@@ -116,11 +117,12 @@ class GAIL:
 
         return act_losses,disc_losses
 
-    def save(self, directory='./weights', name='GAIL'):
+    def save(self, directory='/home/aman/Programming/RL-Project/Deterministic-GAIL/weights', name='GAIL'):
         torch.save(self.actor.state_dict(), '{}/{}_actor.pth'.format(directory,name))
         torch.save(self.disc.state_dict(), '{}/{}_discriminator.pth'.format(directory,name))
         
-    def load(self, directory='./weights', name='GAIL'):
+    def load(self, directory='/home/aman/Programming/RL-Project/Deterministic-GAIL/weights', name='GAIL'):
+        print(os.getcwd())
         self.actor.load_state_dict(torch.load('{}/{}_actor.pth'.format(directory,name)))
         self.disc.load_state_dict(torch.load('{}/{}_discriminator.pth'.format(directory,name)))
 

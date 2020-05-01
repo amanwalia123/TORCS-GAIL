@@ -130,7 +130,7 @@ class ExpertTrajectories(object):
 
 
 if __name__ == "__main__":
-    exp_dir = "./expert_trajectories"
+    exp_dir = "./Expert_Trajectories"
     exp_traj = ExpertTrajectories(_expert_dir=exp_dir,thresh=0.5)
     states,actions = exp_traj.sample(100)
     print(states)

@@ -8,8 +8,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "/home/aman/Programming/RL-Project/Deterministic-GAIL/test.py",
-            "console": "integratedTerminal"
+            "program": "/home/aman/Programming/RL-Project/Deterministic-GAIL/playexpert.py",
+            "console": "integratedTerminal",
+            "args":["--file","/home/aman/Programming/RL-Project/Expert_Trajectories/episode-751.pkl",
+                    "--num_play","2"]
         }
     ]
 }
